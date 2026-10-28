@@ -89,6 +89,10 @@ Hasta la feria la app está en **modo preview**: la web pide login y solo entra 
 - Para un QR impreso, haz una captura de esa pantalla o genera uno con la misma URL.
 - Al terminar, entra en `admin.html` y descarga el CSV. Usa `;` como separador para que Excel lo abra bien en español.
 
+## Publicar cambios
+
+Los scripts y estilos se cargan con `?v=2` en [index.html](index.html) y [admin.html](admin.html). Cuando cambies algún `.js` o `.css`, sube ese número (`?v=3`, …) para que los navegadores no usen la versión vieja de su caché.
+
 ## Editar preguntas
 
 Las preguntas están en [questions.js](questions.js). La opción correcta es la que indica `answer` (por defecto la primera). Las opciones se barajan para cada jugador, así que da igual en qué orden se escriban. Si cambias el número de preguntas, actualiza los límites de `score` (máximo 150 × nº de preguntas) y de `correct` en [firestore.rules](firestore.rules).
