@@ -135,7 +135,7 @@ function sqlTableHtml() {
 }
 
 // ============ NAVEGACIÓN ============
-const VIEWS = ['home', 'register', 'section', 'quiz', 'result', 'ranking', 'stand'];
+const VIEWS = ['login', 'home', 'register', 'section', 'quiz', 'result', 'ranking', 'stand'];
 
 function show(view) {
   VIEWS.forEach(v => { $('view-' + v).hidden = v !== view; });
@@ -153,6 +153,7 @@ function go(view) {
 
 function route() {
   stopQuiz();
+  if (locked) return show('login');
   const hash = location.hash.slice(1);
   show(hash === 'ranking' ? 'ranking' : hash === 'pantalla' ? 'stand' : 'home');
 }
@@ -162,11 +163,17 @@ window.addEventListener('popstate', route);
 // ============ REGISTRO ============
 let player = null;
 
+[['f-interest', INTERESTS], ['f-status', STATUSES]].forEach(([id, list]) => {
+  $(id).insertAdjacentHTML('beforeend', list.map(v => `<option>${escapeHtml(v)}</option>`).join(''));
+});
+
 $('register-form').addEventListener('submit', async e => {
   e.preventDefault();
   const name = $('f-name').value.trim().replace(/\s+/g, ' ');
   const email = $('f-email').value.trim().toLowerCase();
   let linkedin = $('f-linkedin').value.trim();
+  const interest = $('f-interest').value;
+  const status = $('f-status').value;
   const consent = $('f-consent').checked;
 
   const fail = (msg, field) => {
@@ -178,6 +185,8 @@ $('register-form').addEventListener('submit', async e => {
   if (name.length < 2) return fail('Escribe tu nombre.', $('f-name'));
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return fail('Revisa el email.', $('f-email'));
   if (linkedin && !/linkedin\./i.test(linkedin)) return fail('Pega la URL de tu perfil de LinkedIn.', $('f-linkedin'));
+  if (!interest) return fail('Elige qué te interesa más.', $('f-interest'));
+  if (!status) return fail('Dinos en qué momento estás.', $('f-status'));
   if (!consent) return fail('Necesitamos tu consentimiento para guardar la puntuación.', null);
   if (linkedin && !/^https?:\/\//i.test(linkedin)) linkedin = 'https://' + linkedin;
   fail('', null);
@@ -190,7 +199,7 @@ $('register-form').addEventListener('submit', async e => {
     let played = false;
     try { played = await withTimeout(store.hasPlayed(id), 5000); } catch (_) { /* sin conexión: se comprueba al guardar */ }
     if (played) return fail('Este email ya ha participado. ¡Busca tu nombre en el ranking!', $('f-email'));
-    player = { id, name, email, linkedin, consent };
+    player = { id, name, email, linkedin, interest, status, consent };
     startQuiz();
   } finally {
     btn.disabled = false;
@@ -323,7 +332,7 @@ let lastResult = null;
 function finishQuiz() {
   const correct = quiz.answers.filter(a => a.correct).length;
   const timeMs = Math.round(quiz.answers.reduce((t, a) => t + a.ms, 0));
-  lastResult = { id: player.id, score: quiz.score, correct, timeMs, answers: quiz.answers };
+  lastResult = { id: player.id, score: quiz.score, correct, timeMs, answers: quiz.answers, bySection: correctBySection(quiz.answers) };
   stopQuiz();
 
   const ratio = correct / QUESTIONS.length;
@@ -336,10 +345,21 @@ function finishQuiz() {
   saveResult();
 }
 
+// Aciertos por ronda: { sql: n, ml: n, python: n }
+function correctBySection(answers) {
+  const out = Object.fromEntries(Object.keys(SECTIONS).map(s => [s, 0]));
+  QUESTIONS.forEach((q, i) => { if (answers[i].correct) out[q.section]++; });
+  return out;
+}
+
 async function saveResult() {
   const r = lastResult;
   const entry = { name: player.name, score: r.score, correct: r.correct, timeMs: r.timeMs };
-  const contact = { ...entry, email: player.email, linkedin: player.linkedin, consent: player.consent };
+  const contact = {
+    ...entry, ...r.bySection,
+    email: player.email, linkedin: player.linkedin,
+    interest: player.interest, status: player.status, consent: player.consent
+  };
   $('r-error').textContent = 'Guardando tu puntuación…';
   try {
     await store.save(player.id, entry, contact);
@@ -378,7 +398,7 @@ function renderResultStats() {
     <div class="stat">
       <div class="stat-label">Por rondas</div>
       <div class="stat-value" style="font-size:18px">${Object.keys(SECTIONS).map(s =>
-        `${SECTIONS[s].short} ${QUESTIONS.reduce((n, q, i) => n + (q.section === s && r.answers[i].correct ? 1 : 0), 0)}/${QUESTIONS.filter(q => q.section === s).length}`
+        `${SECTIONS[s].short} ${r.bySection[s]}/${QUESTIONS.filter(q => q.section === s).length}`
       ).join('<br>')}</div>
     </div>`;
 }
@@ -454,11 +474,31 @@ function renderStand() {
   $('stand-count').textContent = participants();
 }
 
-store.watch(list => {
-  entries = list;
-  if (!$('view-ranking').hidden) renderRanking();
-  if (!$('view-stand').hidden) renderStand();
-  if (!$('view-result').hidden) renderResultStats();
-});
+// ============ ARRANQUE ============
+// En modo preview (PREVIEW en config.js) solo entra la admin hasta que se abra el reto
+let locked = PREVIEW && !!firebaseConfig.apiKey;
 
-route();
+function start() {
+  locked = false;
+  store.watch(list => {
+    entries = list;
+    if (!$('view-ranking').hidden) renderRanking();
+    if (!$('view-stand').hidden) renderStand();
+    if (!$('view-result').hidden) renderResultStats();
+  });
+  route();
+}
+
+if (locked) {
+  firebase.auth().onAuthStateChanged(user => { if (user && locked) start(); else if (!user) route(); });
+  $('login-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    try {
+      await firebase.auth().signInWithEmailAndPassword($('l-email').value.trim(), $('l-pass').value);
+    } catch (_) {
+      $('login-error').textContent = 'Email o contraseña incorrectos.';
+    }
+  });
+} else {
+  start();
+}

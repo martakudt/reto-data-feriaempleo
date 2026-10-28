@@ -17,6 +17,8 @@
     .admin-table th { color: var(--q-purple-mid); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
     .admin-table a { color: var(--q-lime); }
     .table-wrap { overflow-x: auto; }
+    .filters { display: flex; gap: var(--sp-3); flex-wrap: wrap; margin-top: var(--sp-6); }
+    .filters .form-input { width: auto; min-width: 220px; }
   </style>
 </head>
 <body>
@@ -41,13 +43,17 @@
 
       <div id="panel" hidden>
         <p class="sec-desc" id="a-count"></p>
+        <div class="filters">
+          <select class="form-input" id="flt-interest" onchange="render()"><option value="">Todos los intereses</option></select>
+          <select class="form-input" id="flt-status" onchange="render()"><option value="">Todas las situaciones</option></select>
+        </div>
         <div class="actions" style="margin-top: 16px">
           <button class="btn btn-accent" onclick="downloadCsv()">Descargar CSV</button>
           <button class="btn btn-outline-light" onclick="firebase.auth().signOut()">Salir</button>
         </div>
         <div class="table-wrap">
           <table class="admin-table">
-            <thead><tr><th>#</th><th>Nombre</th><th>Email</th><th>LinkedIn</th><th>Puntos</th><th>Aciertos</th><th>Tiempo</th><th>Fecha</th></tr></thead>
+            <thead><tr><th>#</th><th>Nombre</th><th>Email</th><th>LinkedIn</th><th>Interés</th><th>Situación</th><th>Puntos</th><th>Aciertos</th><th>SQL</th><th>ML</th><th>Py</th><th>Tiempo</th><th>Fecha</th></tr></thead>
             <tbody id="a-rows"></tbody>
           </table>
         </div>
@@ -62,6 +68,16 @@
     const fmtTime = ms => { const s = Math.round(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
     const fmtDate = ts => ts && ts.toDate ? ts.toDate().toLocaleString('es-ES') : '';
     let rows = [];
+
+    [['flt-interest', INTERESTS], ['flt-status', STATUSES]].forEach(([id, list]) => {
+      $(id).insertAdjacentHTML('beforeend', list.map(v => `<option>${esc(v)}</option>`).join(''));
+    });
+
+    // Filas que pasan los filtros (también es lo que se descarga en el CSV)
+    function filtered() {
+      const i = $('flt-interest').value, s = $('flt-status').value;
+      return rows.filter(r => (!i || r.interest === i) && (!s || r.status === s));
+    }
 
     if (!firebaseConfig.apiKey) {
       $('a-error').textContent = 'Falta rellenar firebaseConfig en config.js.';
@@ -92,15 +108,23 @@
     });
 
     function render() {
-      $('a-count').textContent = `${rows.length} participantes`;
-      $('a-rows').innerHTML = rows.map((r, i) => `
+      const list = filtered();
+      $('a-count').textContent = list.length === rows.length
+        ? `${rows.length} participantes`
+        : `${list.length} de ${rows.length} participantes`;
+      $('a-rows').innerHTML = list.map((r, i) => `
         <tr>
           <td>${i + 1}</td>
           <td>${esc(r.name)}</td>
           <td>${esc(r.email)}</td>
           <td>${r.linkedin ? `<a href="${esc(r.linkedin)}" target="_blank" rel="noopener">perfil</a>` : ''}</td>
+          <td>${esc(r.interest)}</td>
+          <td>${esc(r.status)}</td>
           <td>${r.score}</td>
           <td>${r.correct}</td>
+          <td>${r.sql ?? ''}</td>
+          <td>${r.ml ?? ''}</td>
+          <td>${r.python ?? ''}</td>
           <td>${fmtTime(r.timeMs)}</td>
           <td>${esc(fmtDate(r.createdAt))}</td>
         </tr>`).join('');
@@ -108,8 +132,8 @@
 
     function downloadCsv() {
       const cell = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
-      const lines = [['posicion', 'nombre', 'email', 'linkedin', 'puntos', 'aciertos', 'tiempo_s', 'fecha']]
-        .concat(rows.map((r, i) => [i + 1, r.name, r.email, r.linkedin, r.score, r.correct, Math.round(r.timeMs / 1000), fmtDate(r.createdAt)]));
+      const lines = [['posicion', 'nombre', 'email', 'linkedin', 'interes', 'situacion', 'puntos', 'aciertos', 'sql', 'ml', 'python', 'tiempo_s', 'fecha']]
+        .concat(filtered().map((r, i) => [i + 1, r.name, r.email, r.linkedin, r.interest, r.status, r.score, r.correct, r.sql, r.ml, r.python, Math.round(r.timeMs / 1000), fmtDate(r.createdAt)]));
       // BOM para que Excel abra bien las tildes
       const blob = new Blob(['﻿' + lines.map(l => l.map(cell).join(';')).join('\r\n')], { type: 'text/csv;charset=utf-8' });
       const a = document.createElement('a');

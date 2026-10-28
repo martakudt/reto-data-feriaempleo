@@ -6,11 +6,11 @@ Juego para el stand de QUANTIA en la **Feria de Empleo de EDEM (martes 3 de novi
 
 | Ronda | Preguntas | Tiempo por pregunta |
 |---|---|---|
-| SQL: consultas trampa sobre una tabla con `NULL` | 5 | 20 s |
-| Machine Learning: árboles de decisión y conceptos clave | 5 | 15 s |
-| Python: ¿qué imprime? | 5 | 20 s |
+| SQL: consultas trampa sobre una tabla con `NULL` | 5 | 25 s |
+| Machine Learning: árboles de decisión y conceptos clave | 5 | 20 s |
+| Python: ¿qué imprime? | 5 | 25 s |
 
-El máximo es 4:35 si se agota el tiempo en todas las preguntas. Lo normal es acabar en 2 o 3 minutos.
+El máximo es 5:50 si se agota el tiempo en todas las preguntas. Lo normal es acabar en 2 o 3 minutos.
 
 **Puntuación:** 100 puntos por acierto y hasta 50 más según lo rápido que se responda (máximo 2250). Si hay empate, gana quien haya tardado menos. Cada email solo puede jugar una vez.
 
@@ -45,7 +45,7 @@ leaderboard/{id}   público: lo lee cualquiera
   name, score, correct, timeMs, createdAt
 
 contacts/{id}      privado: solo lo lee la admin
-  name, email, linkedin, score, correct, timeMs, consent, createdAt
+  name, email, linkedin, interest, status, sql, ml, python, score, correct, timeMs, consent, createdAt
 ```
 
 `id` es un hash SHA-256 del email, así que el email nunca aparece en la colección pública. Los dos documentos se escriben en un único batch, y las reglas no permiten sobrescribirlos, que es lo que limita cada email a un intento.
@@ -79,6 +79,12 @@ Abre `http://localhost:8000`.
 
 ### 4. El día de la feria
 
+Hasta la feria la app está en **modo preview**: la web pide login y solo entra la cuenta admin, y las reglas bloquean el ranking y los registros para el resto. Para abrirla:
+
+1. En [config.js](config.js), pon `PREVIEW = false`, haz commit y push.
+2. En [firestore.rules](firestore.rules), cambia `isOpen()` a `return true;` y publica las reglas en **Firestore → Reglas**.
+3. Borra desde la consola de Firebase los resultados de prueba (`leaderboard` y `contacts`).
+
 - Abre `https://martakudt.github.io/app-edem-feriaempleo/#pantalla` en el portátil o la pantalla del stand. El QR se genera solo con la URL de la página.
 - Para un QR impreso, haz una captura de esa pantalla o genera uno con la misma URL.
 - Al terminar, entra en `admin.html` y descarga el CSV. Usa `;` como separador para que Excel lo abra bien en español.
@@ -91,5 +97,7 @@ Las preguntas están en [questions.js](questions.js). La opción correcta es la 
 
 - La `apiKey` de Firebase no es un secreto. Lo que protege los datos son las reglas de Firestore.
 - El ranking público solo muestra el nombre. El email y el LinkedIn únicamente se pueden leer con la cuenta admin.
-- El registro incluye una casilla de consentimiento obligatoria. Después de la feria conviene borrar los contactos que no se vayan a usar.
+- El registro incluye una casilla de consentimiento obligatoria y la información básica de protección de datos en [index.html](index.html). Si QUANTIA tiene una política de privacidad publicada, conviene enlazarla ahí.
+- Los contactos se guardan para futuros procesos de selección durante el plazo indicado en ese texto (por defecto 12 meses). Pasado ese plazo hay que borrarlos desde la consola de Firebase.
+- En `admin.html` se puede filtrar por interés y situación. El CSV descarga solo las filas filtradas e incluye los aciertos por ronda (SQL, ML y Python).
 - La puntuación se calcula en el navegador, así que alguien con conocimientos podría enviar una puntuación falsa (las reglas limitan los valores al rango válido). Para una feria es suficiente. Si alguien hace trampas, se borra su entrada desde la consola.

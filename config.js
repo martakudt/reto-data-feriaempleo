@@ -9,3 +9,11 @@ const firebaseConfig = {
   messagingSenderId: "829395802803",
   appId: "1:829395802803:web:e558e3aff0f4be3d1f6ec6"
 };
+
+// Modo preview: si es true, solo la admin puede entrar (pide login) y firestore.rules bloquea al resto.
+// El día de la feria: ponlo a false y cambia isOpen() a true en firestore.rules.
+const PREVIEW = true;
+
+// Opciones del registro. Si las cambias, cámbialas también en firestore.rules (validProfile).
+const INTERESTS = ['Data Analyst', 'Data Science / ML', 'IA / LLMs', 'Data Engineering', 'Aún no lo sé'];
+const STATUSES = ['Estudiando', 'Busco prácticas', 'Busco empleo', 'Trabajando'];

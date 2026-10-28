@@ -6,6 +6,11 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == 'LtP5gKI4nDe5q025D87oV3sXq803';
     }
 
+    // Modo preview: false = solo la admin puede jugar y ver el ranking. El día de la feria, cámbialo a true.
+    function isOpen() {
+      return false;
+    }
+
     function validResult(d) {
       return d.name is string && d.name.size() >= 2 && d.name.size() <= 40
         && d.score is int && d.score >= 0 && d.score <= 2250
@@ -14,10 +19,21 @@ service cloud.firestore {
         && d.createdAt == request.time;
     }
 
+    // Perfil y aciertos por ronda (5 preguntas por ronda). Las listas deben coincidir con config.js.
+    function validProfile(d) {
+      return d.interest in ['Data Analyst', 'Data Science / ML', 'IA / LLMs', 'Data Engineering', 'Aún no lo sé']
+        && d.status in ['Estudiando', 'Busco prácticas', 'Busco empleo', 'Trabajando']
+        && d.sql is int && d.sql >= 0 && d.sql <= 5
+        && d.ml is int && d.ml >= 0 && d.ml <= 5
+        && d.python is int && d.python >= 0 && d.python <= 5
+        && d.sql + d.ml + d.python == d.correct;
+    }
+
     // Ranking público: cualquiera lo lee, solo se crea una vez por email (id = hash del email)
     match /leaderboard/{id} {
-      allow read: if true;
-      allow create: if request.resource.data.keys().hasOnly(['name', 'score', 'correct', 'timeMs', 'createdAt'])
+      allow read: if isOpen() || isAdmin();
+      allow create: if (isOpen() || isAdmin())
+        && request.resource.data.keys().hasOnly(['name', 'score', 'correct', 'timeMs', 'createdAt'])
         && validResult(request.resource.data)
         && existsAfter(/databases/$(database)/documents/contacts/$(id));
       allow update, delete: if false;
@@ -26,8 +42,10 @@ service cloud.firestore {
     // Datos de contacto: nadie los lee salvo la admin
     match /contacts/{id} {
       allow read, delete: if isAdmin();
-      allow create: if request.resource.data.keys().hasOnly(['name', 'email', 'linkedin', 'score', 'correct', 'timeMs', 'consent', 'createdAt'])
+      allow create: if (isOpen() || isAdmin())
+        && request.resource.data.keys().hasOnly(['name', 'email', 'linkedin', 'interest', 'status', 'sql', 'ml', 'python', 'score', 'correct', 'timeMs', 'consent', 'createdAt'])
         && validResult(request.resource.data)
+        && validProfile(request.resource.data)
         && request.resource.data.email is string && request.resource.data.email.size() <= 120
         && request.resource.data.linkedin is string && request.resource.data.linkedin.size() <= 210
         && request.resource.data.consent == true

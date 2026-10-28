@@ -11,10 +11,34 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=Nunito+Sans:wght@300;400;600;700&display=swap">
   <link rel="stylesheet" href="./styles.css">
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
+
+  <!-- Login del modo preview (PREVIEW en config.js) -->
+  <main class="screen" id="view-login" hidden>
+    <div class="wrap narrow">
+      <div class="logo">QUANT<span>IA</span></div>
+      <p class="sec-label">Acceso privado</p>
+      <h2 class="sec-title">Aún no está <span>abierto</span></h2>
+      <p class="sec-desc">El reto se abre el martes 3 de noviembre en la Feria de Empleo de EDEM.</p>
+
+      <form class="form" id="login-form" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="l-email">Email</label>
+          <input class="form-input" id="l-email" type="email" autocomplete="email" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="l-pass">Contraseña</label>
+          <input class="form-input" id="l-pass" type="password" autocomplete="current-password" required>
+        </div>
+        <p class="form-error" id="login-error"></p>
+        <button class="btn btn-accent btn-lg btn-block" type="submit">Entrar</button>
+      </form>
+    </div>
+  </main>
 
   <!-- Portada -->
   <main class="screen" id="view-home">
@@ -64,10 +88,31 @@
           <label class="form-label" for="f-linkedin">LinkedIn <span class="optional">(opcional)</span></label>
           <input class="form-input" id="f-linkedin" type="text" maxlength="200" autocomplete="url" placeholder="linkedin.com/in/anagarcia">
         </div>
+        <div class="form-group">
+          <label class="form-label" for="f-interest">¿Qué te interesa más?</label>
+          <select class="form-input" id="f-interest" required>
+            <option value="" disabled selected>Elige una opción</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f-status">¿En qué momento estás?</label>
+          <select class="form-input" id="f-status" required>
+            <option value="" disabled selected>Elige una opción</option>
+          </select>
+        </div>
         <label class="check">
           <input type="checkbox" id="f-consent" required>
-          <span>Acepto que QUANTIA guarde mis datos para el ranking y para contactarme sobre oportunidades de empleo.</span>
+          <span>Acepto que QUANTIA guarde mis datos para el ranking y para contactarme en futuros procesos de selección.</span>
         </label>
+        <details class="privacy">
+          <summary>Información sobre protección de datos</summary>
+          <p><strong>Responsable:</strong> QUANTIA. Contacto: <a href="mailto:marta.torres@quantia.es">marta.torres@quantia.es</a>.</p>
+          <p><strong>Finalidad:</strong> gestionar tu participación en el reto y contactarte en procesos de selección de QUANTIA.</p>
+          <p><strong>Legitimación:</strong> tu consentimiento, que puedes retirar cuando quieras.</p>
+          <p><strong>Conservación:</strong> 12 meses desde la feria; después se borran.</p>
+          <p><strong>Destinatarios:</strong> no se ceden a terceros. Se guardan en servidores de Google Firebase.</p>
+          <p><strong>Derechos:</strong> puedes pedir acceso, rectificación o borrado de tus datos, u oponerte a su uso, escribiendo a <a href="mailto:marta.torres@quantia.es">marta.torres@quantia.es</a>. También puedes reclamar ante la AEPD (aepd.es).</p>
+        </details>
         <p class="form-error" id="register-error"></p>
         <button class="btn btn-accent btn-lg btn-block" type="submit" id="register-btn">¡Vamos! →</button>
       </form>
