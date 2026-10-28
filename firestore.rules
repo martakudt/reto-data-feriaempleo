@@ -1,0 +1,38 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // UID de la cuenta admin (Authentication → Usuarios)
+    function isAdmin() {
+      return request.auth != null && request.auth.uid == 'LtP5gKI4nDe5q025D87oV3sXq803';
+    }
+
+    function validResult(d) {
+      return d.name is string && d.name.size() >= 2 && d.name.size() <= 40
+        && d.score is int && d.score >= 0 && d.score <= 2250
+        && d.correct is int && d.correct >= 0 && d.correct <= 15
+        && d.timeMs is int && d.timeMs >= 0 && d.timeMs <= 600000
+        && d.createdAt == request.time;
+    }
+
+    // Ranking público: cualquiera lo lee, solo se crea una vez por email (id = hash del email)
+    match /leaderboard/{id} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['name', 'score', 'correct', 'timeMs', 'createdAt'])
+        && validResult(request.resource.data)
+        && existsAfter(/databases/$(database)/documents/contacts/$(id));
+      allow update, delete: if false;
+    }
+
+    // Datos de contacto: nadie los lee salvo la admin
+    match /contacts/{id} {
+      allow read, delete: if isAdmin();
+      allow create: if request.resource.data.keys().hasOnly(['name', 'email', 'linkedin', 'score', 'correct', 'timeMs', 'consent', 'createdAt'])
+        && validResult(request.resource.data)
+        && request.resource.data.email is string && request.resource.data.email.size() <= 120
+        && request.resource.data.linkedin is string && request.resource.data.linkedin.size() <= 210
+        && request.resource.data.consent == true
+        && existsAfter(/databases/$(database)/documents/leaderboard/$(id));
+      allow update: if false;
+    }
+  }
+}

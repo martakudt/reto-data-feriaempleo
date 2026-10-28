@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0D0D0D">
+  <title>Reto Data · QUANTIA</title>
+  <link rel="icon" type="image/svg+xml" href="./icon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=Nunito+Sans:wght@300;400;600;700&display=swap">
+  <link rel="stylesheet" href="./styles.css">
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+
+  <!-- Portada -->
+  <main class="screen" id="view-home">
+    <div class="wrap hero">
+      <div class="hero-badge"><span class="hero-badge-dot"></span>Feria de Empleo EDEM · 3 nov</div>
+      <div class="logo">QUANT<span>IA</span></div>
+      <h1 class="hero-heading">El reto <em>Data</em><br>en 5 minutos.</h1>
+      <p class="hero-body">15 preguntas rápidas en tres rondas: <strong>SQL</strong>, <strong>Machine Learning</strong> y <strong>Python</strong>. Acierta, sé rápido y sube al ranking.</p>
+
+      <div class="rounds">
+        <div class="round"><span class="round-n">01</span><span class="round-t">SQL</span><span class="round-d">Consultas trampa</span></div>
+        <div class="round"><span class="round-n">02</span><span class="round-t">ML</span><span class="round-d">Árboles y conceptos</span></div>
+        <div class="round"><span class="round-n">03</span><span class="round-t">Python</span><span class="round-d">¿Qué imprime?</span></div>
+      </div>
+
+      <div class="rules">
+        <div><strong>100</strong> pts por acierto</div>
+        <div><strong>+50</strong> máx. por rapidez</div>
+        <div><strong>1</strong> intento por email</div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-accent btn-lg" onclick="go('register')">Empezar el reto →</button>
+        <button class="btn btn-outline-light btn-lg" onclick="go('ranking')">Ver ranking</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Registro -->
+  <main class="screen" id="view-register" hidden>
+    <div class="wrap narrow">
+      <button class="link-back" onclick="go('home')">← Volver</button>
+      <p class="sec-label">Antes de empezar</p>
+      <h2 class="sec-title">¿Quién <span>juega?</span></h2>
+      <p class="sec-desc">Tu nombre saldrá en el ranking. El email y el LinkedIn solo los verá el equipo de QUANTIA.</p>
+
+      <form class="form" id="register-form" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="f-name">Nombre</label>
+          <input class="form-input" id="f-name" type="text" maxlength="40" autocomplete="name" placeholder="Ana García" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f-email">Email</label>
+          <input class="form-input" id="f-email" type="email" maxlength="120" autocomplete="email" placeholder="ana@email.com" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f-linkedin">LinkedIn <span class="optional">(opcional)</span></label>
+          <input class="form-input" id="f-linkedin" type="text" maxlength="200" autocomplete="url" placeholder="linkedin.com/in/anagarcia">
+        </div>
+        <label class="check">
+          <input type="checkbox" id="f-consent" required>
+          <span>Acepto que QUANTIA guarde mis datos para el ranking y para contactarme sobre oportunidades de empleo.</span>
+        </label>
+        <p class="form-error" id="register-error"></p>
+        <button class="btn btn-accent btn-lg btn-block" type="submit" id="register-btn">¡Vamos! →</button>
+      </form>
+    </div>
+  </main>
+
+  <!-- Intro de cada ronda -->
+  <main class="screen center" id="view-section" hidden>
+    <div class="wrap section-intro">
+      <p class="section-n" id="section-n"></p>
+      <h2 class="section-t" id="section-t"></h2>
+      <p class="section-d" id="section-d"></p>
+    </div>
+  </main>
+
+  <!-- Pregunta -->
+  <main class="screen" id="view-quiz" hidden>
+    <div class="wrap narrow">
+      <div class="quiz-top">
+        <span class="badge badge-dark" id="q-section"></span>
+        <span class="quiz-progress" id="q-progress"></span>
+        <span class="quiz-score" id="q-score"></span>
+      </div>
+      <div class="timer"><div class="timer-bar" id="q-timer"></div></div>
+      <div id="q-body"></div>
+    </div>
+  </main>
+
+  <!-- Resultado -->
+  <main class="screen" id="view-result" hidden>
+    <div class="wrap narrow">
+      <p class="sec-label">Reto completado</p>
+      <h2 class="sec-title" id="r-title"></h2>
+      <div class="stats" id="r-stats"></div>
+      <p class="form-error" id="r-error"></p>
+      <div class="actions">
+        <button class="btn btn-accent btn-lg" onclick="go('ranking')">Ver ranking →</button>
+      </div>
+      <p class="sec-label review-label">Repasa tus respuestas</p>
+      <div class="review" id="r-review"></div>
+    </div>
+  </main>
+
+  <!-- Ranking -->
+  <main class="screen" id="view-ranking" hidden>
+    <div class="wrap narrow">
+      <button class="link-back" onclick="go('home')">← Inicio</button>
+      <p class="sec-label">En directo</p>
+      <h2 class="sec-title">Ranking <span>Data</span></h2>
+      <p class="sec-desc" id="ranking-count"></p>
+      <ol class="ranking" id="ranking-list"></ol>
+    </div>
+  </main>
+
+  <!-- Pantalla del stand: QR + ranking en directo -->
+  <main class="screen" id="view-stand" hidden>
+    <div class="stand">
+      <div class="stand-left">
+        <div class="logo logo-lg">QUANT<span>IA</span></div>
+        <h1 class="hero-heading">El reto <em>Data</em><br>en 5 minutos.</h1>
+        <p class="hero-body">SQL · Machine Learning · Python.<br>Escanea, juega y sube al ranking.</p>
+        <div class="qr" id="stand-qr"></div>
+        <p class="stand-url" id="stand-url"></p>
+      </div>
+      <div class="stand-right">
+        <p class="sec-label">Ranking en directo</p>
+        <ol class="ranking ranking-lg" id="stand-list"></ol>
+        <p class="stand-count" id="stand-count"></p>
+      </div>
+    </div>
+  </main>
+
+  <p class="demo-banner" id="demo-banner" hidden>Modo demo: los resultados solo se guardan en este navegador. Rellena firebaseConfig en config.js.</p>
+
+  <script src="./config.js"></script>
+  <script src="./questions.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
