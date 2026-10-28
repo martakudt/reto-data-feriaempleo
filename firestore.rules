@@ -41,7 +41,7 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['name', 'score', 'correct', 'timeMs', 'createdAt'])
         && validResult(request.resource.data)
         && existsAfter(/databases/$(database)/documents/contacts/$(id));
-      allow delete: if false;
+      allow delete: if isAdmin();
     }
 
     // Datos de contacto: nadie los lee salvo la admin

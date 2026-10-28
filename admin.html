@@ -53,7 +53,7 @@
         </div>
         <div class="table-wrap">
           <table class="admin-table">
-            <thead><tr><th>#</th><th>Nombre</th><th>Email</th><th>LinkedIn</th><th>Interés</th><th>Situación</th><th>Puntos</th><th>Aciertos</th><th>SQL</th><th>ML</th><th>Py</th><th>Tiempo</th><th>Fecha</th></tr></thead>
+            <thead><tr><th>#</th><th>Nombre</th><th>Email</th><th>LinkedIn</th><th>Interés</th><th>Situación</th><th>Puntos</th><th>Aciertos</th><th>SQL</th><th>ML</th><th>Py</th><th>Tiempo</th><th>Fecha</th><th></th></tr></thead>
             <tbody id="a-rows"></tbody>
           </table>
         </div>
@@ -87,15 +87,35 @@
         $('login-form').hidden = !!user;
         $('panel').hidden = !user;
         if (!user) return;
-        try {
-          const snap = await firebase.firestore().collection('contacts').get();
-          rows = snap.docs.map(d => d.data())
-            .sort((a, b) => b.score - a.score || a.timeMs - b.timeMs);
-          render();
-        } catch (err) {
-          $('a-count').textContent = 'Sin permiso para leer los contactos. ¿Está tu UID en ADMIN_UID y en firestore.rules?';
-        }
+        load();
       });
+    }
+
+    async function load() {
+      try {
+        const snap = await firebase.firestore().collection('contacts').get();
+        rows = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+          .sort((a, b) => b.score - a.score || a.timeMs - b.timeMs);
+        render();
+      } catch (err) {
+        $('a-count').textContent = 'Sin permiso para leer los contactos. ¿Está tu UID en isAdmin() de firestore.rules?';
+      }
+    }
+
+    // Borra al participante del ranking y sus datos de contacto (pruebas, trampas o peticiones de borrado)
+    async function removeRow(id) {
+      const r = rows.find(x => x.id === id);
+      if (!r || !confirm(`¿Borrar a ${r.name} (${r.email}) del ranking y de los contactos?`)) return;
+      const db = firebase.firestore();
+      const batch = db.batch();
+      batch.delete(db.collection('leaderboard').doc(id));
+      batch.delete(db.collection('contacts').doc(id));
+      try {
+        await batch.commit();
+        load();
+      } catch (err) {
+        alert('No se ha podido borrar. ¿Has publicado las reglas nuevas en la consola de Firebase?');
+      }
     }
 
     $('login-form').addEventListener('submit', async e => {
@@ -127,6 +147,7 @@
           <td>${r.python ?? ''}</td>
           <td>${fmtTime(r.timeMs)}</td>
           <td>${esc(fmtDate(r.createdAt))}</td>
+          <td><button class="btn btn-outline-light" onclick="removeRow('${esc(r.id)}')">Borrar</button></td>
         </tr>`).join('');
     }
 

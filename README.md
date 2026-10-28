@@ -21,7 +21,7 @@ El máximo es 5:50 si se agota el tiempo en todas las preguntas. Lo normal es ac
 | `/` | El juego, para el móvil de cada participante |
 | `/#ranking` | Ranking en directo (top 20) |
 | `/#pantalla` | Para la pantalla o el portátil del stand: QR grande y top 10 en directo |
-| `/admin.html` | Lista de participantes con email y LinkedIn, y descarga en CSV (solo la admin) |
+| `/admin.html` | Lista de participantes con email y LinkedIn, descarga en CSV y botón para borrar participantes (solo la admin) |
 
 ## Estructura
 
@@ -48,7 +48,7 @@ contacts/{id}      privado: solo lo lee la admin
   name, email, linkedin, interest, status, sql, ml, python, score, correct, timeMs, consent, createdAt
 ```
 
-`id` es un hash SHA-256 del email, así que el email nunca aparece en la colección pública. Los dos documentos se escriben en un único batch, y las reglas no permiten sobrescribirlos, que es lo que limita cada email a un intento.
+`id` es un hash SHA-256 del email, así que el email nunca aparece en la colección pública. Los dos documentos se escriben en un único batch, y las reglas no permiten sobrescribirlos, que es lo que limita cada email a un intento. La única excepción es la cuenta admin, que puede repetir para hacer pruebas.
 
 ## Puesta en marcha
 
@@ -73,9 +73,9 @@ Abre `http://localhost:8000`.
 
 ### 3. Publicar en GitHub Pages
 
-1. Sube el repo a GitHub (`martakudt/app-edem-feriaempleo`).
+1. Sube el repo a GitHub (`martakudt/reto-data-feriaempleo`).
 2. Ve a **Settings → Pages → Build and deployment**, elige **Deploy from a branch**, rama `main` y carpeta `/ (root)`.
-3. La URL será `https://martakudt.github.io/app-edem-feriaempleo/`.
+3. La URL será `https://martakudt.github.io/reto-data-feriaempleo/`.
 
 ### 4. El día de la feria
 
@@ -83,9 +83,10 @@ Hasta la feria la app está en **modo preview**: la web pide login y solo entra 
 
 1. En [config.js](config.js), pon `PREVIEW = false`, haz commit y push.
 2. En [firestore.rules](firestore.rules), cambia `isOpen()` a `return true;` y publica las reglas en **Firestore → Reglas**.
-3. Borra desde la consola de Firebase los resultados de prueba (`leaderboard` y `contacts`).
+3. Borra los resultados de prueba con el botón **Borrar** de `admin.html`.
+4. Cierra sesión de la cuenta admin en los dispositivos del stand (botón **Salir** de `admin.html`): con la sesión abierta, ese dispositivo puede jugar varias veces con el mismo email.
 
-- Abre `https://martakudt.github.io/app-edem-feriaempleo/#pantalla` en el portátil o la pantalla del stand. El QR se genera solo con la URL de la página.
+- Abre `https://martakudt.github.io/reto-data-feriaempleo/#pantalla` en el portátil o la pantalla del stand. El QR se genera solo con la URL de la página.
 - Para un QR impreso, haz una captura de esa pantalla o genera uno con la misma URL.
 - Al terminar, entra en `admin.html` y descarga el CSV. Usa `;` como separador para que Excel lo abra bien en español.
 
@@ -102,6 +103,6 @@ Las preguntas están en [questions.js](questions.js). La opción correcta es la 
 - La `apiKey` de Firebase no es un secreto. Lo que protege los datos son las reglas de Firestore.
 - El ranking público solo muestra el nombre. El email y el LinkedIn únicamente se pueden leer con la cuenta admin.
 - El registro incluye una casilla de consentimiento obligatoria y la información básica de protección de datos en [index.html](index.html). Si QUANTIA tiene una política de privacidad publicada, conviene enlazarla ahí.
-- Los contactos se guardan para futuros procesos de selección durante el plazo indicado en ese texto (por defecto 12 meses). Pasado ese plazo hay que borrarlos desde la consola de Firebase.
+- Los contactos se guardan para futuros procesos de selección durante el plazo indicado en ese texto (por defecto 12 meses). Pasado ese plazo hay que borrarlos desde la consola de Firebase. Las peticiones de borrado individuales se atienden con el botón **Borrar** de `admin.html`.
 - En `admin.html` se puede filtrar por interés y situación. El CSV descarga solo las filas filtradas e incluye los aciertos por ronda (SQL, ML y Python).
-- La puntuación se calcula en el navegador, así que alguien con conocimientos podría enviar una puntuación falsa (las reglas limitan los valores al rango válido). Para una feria es suficiente. Si alguien hace trampas, se borra su entrada desde la consola.
+- La puntuación se calcula en el navegador, así que alguien con conocimientos podría enviar una puntuación falsa (las reglas limitan los valores al rango válido). Para una feria es suficiente. Si alguien hace trampas, se borra su entrada con el botón **Borrar** de `admin.html`.
