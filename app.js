@@ -17,6 +17,7 @@ function firestoreStore() {
   const db = firebase.firestore();
   return {
     async hasPlayed(id) {
+      if (firebase.auth && firebase.auth().currentUser) return false; // la admin puede repetir para hacer pruebas
       return (await db.collection('leaderboard').doc(id).get()).exists;
     },
     async save(id, entry, contact) {

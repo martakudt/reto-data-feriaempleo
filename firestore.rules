@@ -29,20 +29,25 @@ service cloud.firestore {
         && d.sql + d.ml + d.python == d.correct;
     }
 
+    // Los participantes solo pueden crear (un intento por email). La admin puede sobrescribir para hacer pruebas.
+    function canWrite() {
+      return isAdmin() || (isOpen() && request.method == 'create');
+    }
+
     // Ranking público: cualquiera lo lee, solo se crea una vez por email (id = hash del email)
     match /leaderboard/{id} {
       allow read: if isOpen() || isAdmin();
-      allow create: if (isOpen() || isAdmin())
+      allow create, update: if canWrite()
         && request.resource.data.keys().hasOnly(['name', 'score', 'correct', 'timeMs', 'createdAt'])
         && validResult(request.resource.data)
         && existsAfter(/databases/$(database)/documents/contacts/$(id));
-      allow update, delete: if false;
+      allow delete: if false;
     }
 
     // Datos de contacto: nadie los lee salvo la admin
     match /contacts/{id} {
       allow read, delete: if isAdmin();
-      allow create: if (isOpen() || isAdmin())
+      allow create, update: if canWrite()
         && request.resource.data.keys().hasOnly(['name', 'email', 'linkedin', 'interest', 'status', 'sql', 'ml', 'python', 'score', 'correct', 'timeMs', 'consent', 'createdAt'])
         && validResult(request.resource.data)
         && validProfile(request.resource.data)
@@ -50,7 +55,6 @@ service cloud.firestore {
         && request.resource.data.linkedin is string && request.resource.data.linkedin.size() <= 210
         && request.resource.data.consent == true
         && existsAfter(/databases/$(database)/documents/leaderboard/$(id));
-      allow update: if false;
     }
   }
 }
