@@ -74,7 +74,7 @@ const QUESTIONS = [
   {
     section: 'ml', time: 20,
     prompt: 'Entrenas un árbol de decisión sin limitar max_depth: 100% de accuracy en train y 68% en test. ¿Qué está pasando?',
-    options: ['Overfitting', 'Underfitting', 'Faltan escalar las variables', 'El test está mal etiquetado'],
+    options: ['Overfitting', 'Underfitting', 'Falta escalar las variables', 'El test está mal etiquetado'],
     answer: 0,
     explain: 'Sin límite de profundidad el árbol memoriza el train. Se controla con max_depth, min_samples_leaf o poda.'
   },
@@ -87,10 +87,10 @@ const QUESTIONS = [
   },
   {
     section: 'ml', time: 20,
-    prompt: '¿Hace falta estandarizar las variables (StandardScaler) antes de entrenar un árbol de decisión?',
-    options: ['No, los cortes por umbral no dependen de la escala', 'Sí, siempre', 'Solo si hay outliers', 'Solo en regresión'],
+    prompt: 'Escalas todo el dataset con la media y la desviación de todos los datos, y después separas train y test. ¿Qué problema hay?',
+    options: ['Data leakage', 'Underfitting', 'Multicolinealidad', 'Ninguno'],
     answer: 0,
-    explain: 'Un árbol solo compara x ≤ umbral; cualquier transformación monótona deja los mismos cortes.'
+    explain: 'El test ha influido en el escalado, así que su información se cuela en el entrenamiento. Primero se separa y el scaler se ajusta solo con train.'
   },
   {
     section: 'ml', time: 20,
