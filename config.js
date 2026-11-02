@@ -12,7 +12,7 @@ const firebaseConfig = {
 
 // Modo preview: si es true, solo la admin puede entrar (pide login) y firestore.rules bloquea al resto.
 // El día de la feria: ponlo a false y cambia isOpen() a true en firestore.rules.
-const PREVIEW = true;
+const PREVIEW = false;
 
 // Opciones del registro. Si las cambias, cámbialas también en firestore.rules (validProfile).
 const INTERESTS = ['Data Analyst', 'Data Science / ML', 'IA / LLMs', 'Data Engineering', 'Aún no lo sé'];

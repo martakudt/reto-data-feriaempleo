@@ -92,7 +92,7 @@ Hasta la feria la app está en **modo preview**: la web pide login y solo entra 
 
 ## Publicar cambios
 
-Los scripts y estilos se cargan con `?v=5` en [index.html](index.html) y [admin.html](admin.html). Cuando cambies algún `.js` o `.css`, sube ese número (`?v=6`, …) para que los navegadores no usen la versión vieja de su caché.
+Los scripts y estilos se cargan con `?v=6` en [index.html](index.html) y [admin.html](admin.html). Cuando cambies algún `.js` o `.css`, sube ese número (`?v=7`, …) para que los navegadores no usen la versión vieja de su caché.
 
 ## Editar preguntas
 

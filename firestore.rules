@@ -8,7 +8,7 @@ service cloud.firestore {
 
     // Modo preview: false = solo la admin puede jugar y ver el ranking. El día de la feria, cámbialo a true.
     function isOpen() {
-      return false;
+      return true;
     }
 
     function validResult(d) {
